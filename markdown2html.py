@@ -22,8 +22,14 @@ def convert_markdown_to_html(input_file, output_file):
         in_unordered_list = False
         in_ordered_list = False
         in_paragraph = False
+
         for line in f:
             line = line.rstrip()
+
+            # Replace bold and emphasis text
+            line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line)
+            line = re.sub(r'__(.*?)__', r'<em>\1</em>', line)
+
             # Check for Markdown headings
             match = re.match(r"^(#+) (.*)$", line)
             if match:
