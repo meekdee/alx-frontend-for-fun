@@ -19,7 +19,8 @@ def convert_markdown_to_html(input_file, output_file):
     # Read the Markdown file and convert it to HTML
     with open(input_file, encoding="utf-8") as f:
         html_lines = []
-        in_list = False
+        in_unordered_list = False
+        in_ordered_list = False
         for line in f:
             # Check for Markdown headings
             match = re.match(r"^(#+) (.*)$", line)
@@ -29,19 +30,37 @@ def convert_markdown_to_html(input_file, output_file):
                 html_lines.append(f"<h{heading_level}>{heading_text}</h{heading_level}>")
             # Check for unordered list items
             elif line.startswith('- '):
-                if not in_list:
-                    in_list = True
+                if in_ordered_list:
+                    in_ordered_list = False
+                    html_lines.append("</ol>")
+                if not in_unordered_list:
+                    in_unordered_list = True
                     html_lines.append("<ul>")
                 item_text = line[2:].strip()
                 html_lines.append(f"<li>{item_text}</li>")
-            else:
-                if in_list:
-                    in_list = False
+            # Check for ordered list items
+            elif line.startswith('* '):
+                if in_unordered_list:
+                    in_unordered_list = False
                     html_lines.append("</ul>")
+                if not in_ordered_list:
+                    in_ordered_list = True
+                    html_lines.append("<ol>")
+                item_text = line[2:].strip()
+                html_lines.append(f"<li>{item_text}</li>")
+            else:
+                if in_unordered_list:
+                    in_unordered_list = False
+                    html_lines.append("</ul>")
+                if in_ordered_list:
+                    in_ordered_list = False
+                    html_lines.append("</ol>")
                 html_lines.append(line.rstrip())
         
-        if in_list:
+        if in_unordered_list:
             html_lines.append("</ul>")
+        if in_ordered_list:
+            html_lines.append("</ol>")
 
     # Write the HTML output to a file
     with open(output_file, "w", encoding="utf-8") as f:
