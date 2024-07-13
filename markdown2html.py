@@ -6,6 +6,19 @@ A script that converts Markdown to HTML.
 import sys
 import os
 import re
+import hashlib
+
+def md5_hash(text):
+    """
+    Convert the text to an MD5 hash.
+    """
+    return hashlib.md5(text.encode()).hexdigest()
+
+def remove_c(text):
+    """
+    Remove all 'c' characters (case-insensitive) from the text.
+    """
+    return re.sub(r'[cC]', '', text)
 
 def convert_markdown_to_html(input_file, output_file):
     """
@@ -29,6 +42,12 @@ def convert_markdown_to_html(input_file, output_file):
             # Replace bold and emphasis text
             line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line)
             line = re.sub(r'__(.*?)__', r'<em>\1</em>', line)
+
+            # Replace MD5 hash text
+            line = re.sub(r'\[\[(.*?)\]\]', lambda match: md5_hash(match.group(1)), line)
+
+            # Replace text with 'c' characters removed
+            line = re.sub(r'\(\((.*?)\)\)', lambda match: remove_c(match.group(1)), line)
 
             # Check for Markdown headings
             match = re.match(r"^(#+) (.*)$", line)
