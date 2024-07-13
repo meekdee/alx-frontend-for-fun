@@ -21,18 +21,32 @@ def convert_markdown_to_html(input_file, output_file):
         html_lines = []
         in_unordered_list = False
         in_ordered_list = False
+        in_paragraph = False
         for line in f:
+            line = line.rstrip()
             # Check for Markdown headings
             match = re.match(r"^(#+) (.*)$", line)
             if match:
+                if in_unordered_list:
+                    html_lines.append("</ul>")
+                    in_unordered_list = False
+                if in_ordered_list:
+                    html_lines.append("</ol>")
+                    in_ordered_list = False
+                if in_paragraph:
+                    html_lines.append("</p>")
+                    in_paragraph = False
                 heading_level = len(match.group(1))
                 heading_text = match.group(2)
                 html_lines.append(f"<h{heading_level}>{heading_text}</h{heading_level}>")
             # Check for unordered list items
             elif line.startswith('- '):
                 if in_ordered_list:
-                    in_ordered_list = False
                     html_lines.append("</ol>")
+                    in_ordered_list = False
+                if in_paragraph:
+                    html_lines.append("</p>")
+                    in_paragraph = False
                 if not in_unordered_list:
                     in_unordered_list = True
                     html_lines.append("<ul>")
@@ -41,26 +55,42 @@ def convert_markdown_to_html(input_file, output_file):
             # Check for ordered list items
             elif line.startswith('* '):
                 if in_unordered_list:
-                    in_unordered_list = False
                     html_lines.append("</ul>")
+                    in_unordered_list = False
+                if in_paragraph:
+                    html_lines.append("</p>")
+                    in_paragraph = False
                 if not in_ordered_list:
                     in_ordered_list = True
                     html_lines.append("<ol>")
                 item_text = line[2:].strip()
                 html_lines.append(f"<li>{item_text}</li>")
+            # Check for paragraph text
             else:
                 if in_unordered_list:
-                    in_unordered_list = False
                     html_lines.append("</ul>")
+                    in_unordered_list = False
                 if in_ordered_list:
-                    in_ordered_list = False
                     html_lines.append("</ol>")
-                html_lines.append(line.rstrip())
-        
+                    in_ordered_list = False
+                if line.strip() == "":
+                    if in_paragraph:
+                        html_lines.append("</p>")
+                        in_paragraph = False
+                else:
+                    if not in_paragraph:
+                        in_paragraph = True
+                        html_lines.append("<p>")
+                    else:
+                        html_lines.append("<br/>")
+                    html_lines.append(line)
+
         if in_unordered_list:
             html_lines.append("</ul>")
         if in_ordered_list:
             html_lines.append("</ol>")
+        if in_paragraph:
+            html_lines.append("</p>")
 
     # Write the HTML output to a file
     with open(output_file, "w", encoding="utf-8") as f:
